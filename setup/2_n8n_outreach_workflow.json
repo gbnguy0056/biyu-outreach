@@ -170,7 +170,7 @@
         "operation": "executeQuery",
         "query": "select * from public.get_send_queue($1::boolean);",
         "options": {
-          "queryReplacement": "={{ $json.test }}"
+          "queryReplacement": "={{ [$json.test] }}"
         }
       }
     },
@@ -302,7 +302,7 @@
         "operation": "executeQuery",
         "query": "select public.record_sent($1::jsonb) as logged;",
         "options": {
-          "queryReplacement": "={{ JSON.stringify($json) }}"
+          "queryReplacement": "={{ [JSON.stringify($json)] }}"
         }
       }
     },
@@ -336,7 +336,7 @@
         "operation": "executeQuery",
         "query": "select * from public.record_failed($1::jsonb);",
         "options": {
-          "queryReplacement": "={{ JSON.stringify($json) }}"
+          "queryReplacement": "={{ [JSON.stringify($json)] }}"
         }
       }
     },
@@ -417,7 +417,7 @@
         "operation": "executeQuery",
         "query": "select * from public.record_inbound($1::jsonb);",
         "options": {
-          "queryReplacement": "={{ JSON.stringify($json) }}"
+          "queryReplacement": "={{ [JSON.stringify($json)] }}"
         }
       }
     },
