@@ -46,6 +46,7 @@ Both keys are public by design (they're in the dashboard page). Data is protecte
 | Live URL | https://biyu-outreach.vercel.app |
 | Team | LMNTRICS (`team_8AyuSrW1fHs2oXq6yiI5ipBa`) |
 | Project | `biyu-outreach` (`prj_6JWW5wza1W0CTzvFWue3dX0xoJ98`) |
+| Source | GitHub `gbnguy0056/biyu-outreach`, branch `main` |
 
 The page itself is public; nobody sees data without signing in with an admin email.
 
@@ -124,4 +125,4 @@ CSV columns: `email, name, company, role, linkedin, industry, country, notes`. O
 - **Warm-up started** on 25 Sep 2026, so the first week is capped at 10 emails/day.
 - **n8n usage**: about 32 scheduled runs per weekday (~700/month) plus one per batch of incoming mail.
 - **Crash alerts** go to `gabanaofentse1@gmail.com` (set in the *Email error alert* node). Reply and auto-pause alerts use the email set on the dashboard.
-- **Updating the dashboard**: edit `index.html` in GitHub. Vercel redeploys automatically on every push to `main`.
+- **Updating the dashboard**: the live site is deployed from this repo's `main` branch. One-time step for automatic redeploys: Vercel → project **biyu-outreach** → Settings → Git → **Connect** `gbnguy0056/biyu-outreach`. After that, every push to `main` goes live.
