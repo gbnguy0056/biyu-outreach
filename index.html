@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIYU Outreach</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f4f4f1; --surface: #fcfcfb; --surface-2: #f0f0ec; --border: #e2e1dc;
+    --text: #0b0b0b; --text-2: #52514e; --muted: #85847e;
+    --accent: #2a78d6; --accent-soft: #e6f0fb; --on-accent: #ffffff;
+    --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+    --radius: 12px; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 1px rgba(0,0,0,.03);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --border: #2f2f2c;
+      --text: #ffffff; --text-2: #c3c2b7; --muted: #8e8d86;
+      --accent: #3987e5; --accent-soft: #1d2b3d;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --border: #2f2f2c;
+    --text: #ffffff; --text-2: #c3c2b7; --muted: #8e8d86;
+    --accent: #3987e5; --accent-soft: #1d2b3d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+  .logo { min-width: 34px; height: 34px; padding: 0 7px; border-radius: 9px; background: var(--accent); color: var(--on-accent);
+    display: grid; place-items: center; font-weight: 700; letter-spacing: .3px; font-size: 11.5px; }
+  h1 { font-size: 18px; margin: 0; }
+  .sub { color: var(--muted); font-size: 12.5px; }
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
+
+  .toggle { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 99px;
+    border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-weight: 600; }
+  .toggle .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+  .toggle.live .dot { background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
+  .btn { border: 1px solid var(--border); background: var(--surface); padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+  .btn:hover { background: var(--surface-2); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.05); }
+
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
+  .kpi .label { color: var(--text-2); font-size: 12px; }
+  .kpi .value { font-size: 24px; font-weight: 650; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .kpi .value small { font-size: 14px; color: var(--muted); font-weight: 500; }
+  .kpi .note { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  .meter { height: 6px; background: var(--surface-2); border-radius: 99px; margin-top: 8px; overflow: hidden; }
+  .meter > span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card h2 { font-size: 14px; margin: 0; }
+  .card-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .card-head .sub { margin-left: auto; }
+  .card-body { padding: 14px; }
+
+  .replies { display: grid; gap: 10px; }
+  .reply { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+  .reply .top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .reply .who { font-weight: 600; }
+  .reply .co { color: var(--text-2); }
+  .reply .when { margin-left: auto; color: var(--muted); font-size: 12px; }
+  .reply .msg { color: var(--text-2); margin: 6px 0 8px; white-space: pre-wrap; }
+  .reply a { color: var(--accent); text-decoration: none; font-size: 12.5px; font-weight: 600; }
+  .empty { color: var(--muted); padding: 10px 2px; }
+
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--border); background: var(--surface); border-radius: 99px; padding: 4px 10px; cursor: pointer; font-size: 12.5px; color: var(--text-2); }
+  .chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text); font-weight: 600; }
+  .search { margin-left: auto; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 5px 10px; min-width: 180px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: var(--surface); position: sticky; top: 0; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--surface-2); }
+  td.time { white-space: nowrap; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  td .co { color: var(--muted); font-size: 12.5px; }
+  td.subj { color: var(--text-2); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr.detail td { background: var(--surface-2); cursor: default; white-space: pre-wrap; color: var(--text-2); font-size: 13px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--text); }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: var(--muted); }
+  .pill.k-initial i, .pill.k-followup i { background: var(--accent); }
+  .pill.k-reply i { background: var(--good); }
+  .pill.k-opt_out i { background: var(--serious); }
+  .pill.k-bounce i, .pill.k-failed i { background: var(--critical); }
+  .pill.k-auto_reply i { background: var(--muted); }
+  .tag { font-size: 11px; color: var(--muted); margin-left: 6px; }
+  .more { display: block; width: 100%; border: 0; border-top: 1px solid var(--border); background: none; padding: 10px; color: var(--accent); cursor: pointer; font-weight: 600; }
+
+  label.f { display: block; margin-bottom: 12px; }
+  label.f > span { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 4px; font-weight: 600; }
+  label.f small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 4px; }
+  .in { width: 100%; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 8px 10px; }
+  .in:focus, .search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  textarea.in { min-height: 92px; resize: vertical; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fixed { padding: 8px 10px; border-radius: 8px; background: var(--surface-2); color: var(--text-2); border: 1px dashed var(--border); }
+  .save-row { display: flex; gap: 8px; align-items: center; }
+  .warn { color: var(--critical); font-size: 12px; margin: -4px 0 10px; }
+
+  .pipe { display: grid; gap: 8px; }
+  .pipe-row { display: grid; grid-template-columns: 90px 1fr 36px; gap: 8px; align-items: center; font-size: 12.5px; }
+  .pipe-row .bar { height: 10px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .pipe-row .bar span { display: block; height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px; }
+  .pipe-row b { text-align: right; font-variant-numeric: tabular-nums; }
+  .pipe-row span.l { color: var(--text-2); }
+
+  .drop { border: 1.5px dashed var(--border); border-radius: 10px; padding: 14px; text-align: center; color: var(--text-2); cursor: pointer; }
+  .drop:hover { border-color: var(--accent); }
+  .drop small { display: block; color: var(--muted); margin-top: 4px; font-size: 11.5px; }
+
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: var(--bg);
+    padding: 9px 14px; border-radius: 9px; opacity: 0; transition: .2s; pointer-events: none; font-weight: 600; z-index: 9; max-width: calc(100% - 32px); }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+
+  .login { max-width: 360px; margin: 12vh auto; }
+  .login .card-body { padding: 20px; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 980px) {
+    .kpis { grid-template-columns: repeat(3, 1fr); }
+    .grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .search { margin-left: 0; width: 100%; }
+    th:nth-child(4), td:nth-child(4) { display: none; }
+    th, td { padding: 8px 10px; }
+    td.time { font-size: 12px; white-space: normal; width: 64px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Login (live mode only) -->
+<div id="login" class="login hidden">
+  <div class="card">
+    <div class="card-body">
+      <div class="brand" style="margin-bottom:14px"><div class="logo">BIYU</div><div><h1>Outreach</h1><div class="sub">Sign in to your dashboard</div></div></div>
+      <label class="f"><span>Email</span><input id="lg-email" class="in" type="email" autocomplete="username"></label>
+      <label class="f"><span>Password</span><input id="lg-pass" class="in" type="password" autocomplete="current-password"></label>
+      <div id="lg-err" class="warn hidden"></div>
+      <button id="lg-btn" class="btn primary" style="width:100%">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="wrap hidden">
+  <header>
+    <div class="brand">
+      <div class="logo">BIYU</div>
+      <div><h1>Outreach dashboard</h1><div class="sub" id="lastRun">–</div></div>
+    </div>
+    <span id="modeBadge" class="badge hidden">Demo data</span>
+    <button id="liveToggle" class="toggle" title="Pause or resume all sending"><span class="dot"></span><span id="liveText">Paused</span></button>
+    <button id="refresh" class="btn" title="Refresh">↻ Refresh</button>
+    <button id="signout" class="btn hidden" title="Sign out">Sign out</button>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <div class="grid">
+    <main>
+      <div class="card">
+        <div class="card-head"><h2>Latest replies</h2><span class="sub" id="replyCount"></span></div>
+        <div class="card-body"><div class="replies" id="replies"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Email activity</h2>
+          <div class="filters" id="filters"></div>
+          <input id="search" class="search" type="search" placeholder="Search name, company, subject…">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>When</th><th>Prospect</th><th>Type</th><th>Subject</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <button id="more" class="more hidden">Show more</button>
+      </div>
+    </main>
+
+    <aside>
+      <div class="card">
+        <div class="card-head"><h2>Campaign settings</h2></div>
+        <div class="card-body">
+          <label class="f"><span>Target industry</span>
+            <select id="industry" class="in"></select>
+            <small>New emails go to prospects in this industry. Follow-ups continue for everyone already contacted.</small>
+          </label>
+          <label class="f"><span>What we offer this industry (used by the AI)</span>
+            <textarea id="pitch" class="in"></textarea>
+          </label>
+          <div class="row2">
+            <label class="f"><span>Daily send limit</span>
+              <input id="limit" class="in" type="number" min="0" max="150" step="1">
+            </label>
+            <label class="f"><span>Follow-ups per prospect</span>
+              <select id="followups" class="in">
+                <option value="0">None</option><option value="1">1</option><option value="2">2</option>
+                <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+              </select>
+            </label>
+          </div>
+          <div id="limitNote" class="sub" style="margin:-6px 0 12px"></div>
+          <label class="f"><span>Time between follow-ups</span><div class="fixed">Every 3 days (automatic)</div></label>
+          <label class="f"><span>Email me replies at</span><input id="notify" class="in" type="email"></label>
+          <label class="f"><span>Send from (Gmail mailbox connected in n8n)</span><input id="sender" class="in" type="email" placeholder="you@yourdomain.com"></label>
+          <div id="formWarn" class="warn hidden"></div>
+          <div class="save-row"><button id="save" class="btn primary">Save settings</button><span id="saved" class="sub"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Pipeline</h2><span class="sub" id="pipeName"></span></div>
+        <div class="card-body"><div class="pipe" id="pipeline"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Add prospects</h2></div>
+        <div class="card-body">
+          <div class="drop" id="drop">Upload a CSV
+            <small>Columns: email, name, company, role, linkedin, industry, country, notes. Missing industry uses the target industry. Duplicates are skipped.</small>
+          </div>
+          <input id="csv" type="file" accept=".csv,text/csv" class="hidden">
+          <div id="csvResult" class="sub" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* =====================================================================
+   CONFIG — leave empty for demo mode. Fill both to connect your Supabase
+   project (Settings → API: Project URL + anon/publishable key).
+   ===================================================================== */
+const CONFIG = {
+  SUPABASE_URL: 'https://imtmfmhqfuwxsrztgclb.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_HQIVBJHquh1goWolJPjl7g_K6TxoSbt', // publishable key: safe in the browser, data is protected by RLS
+};
+
+const TZ = 'Africa/Gaborone';
+const LIVE = !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY);
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const KIND = {
+  initial: 'First email', followup: 'Follow-up', reply: 'Reply', opt_out: 'Opted out',
+  bounce: 'Bounced', auto_reply: 'Auto-reply', failed: 'Failed',
+};
+const FILTERS = [
+  ['all', 'All'], ['sent', 'Sent'], ['followup', 'Follow-ups'], ['reply', 'Replies'],
+  ['problems', 'Opt-outs & bounces'], ['failed', 'Failed'],
+];
+const STATUS_ORDER = [['new', 'Not contacted'], ['contacted', 'In sequence'], ['replied', 'Replied'],
+  ['completed', 'No response'], ['opted_out', 'Opted out'], ['bounced', 'Bounced'], ['invalid', 'Invalid']];
+
+let db = null;
+let state = { settings: null, industries: [], stats: null, log: [] };
+let view = { filter: 'all', q: '', shown: 25, open: null };
+
+/* ------------------------------ helpers ------------------------------ */
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function fmtTime(iso) {
+  const d = new Date(iso), now = new Date();
+  const day = (x) => x.toLocaleDateString('en-GB', { timeZone: TZ });
+  const time = d.toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+  if (day(d) === day(now)) return 'Today ' + time;
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  if (day(d) === day(y)) return 'Yesterday ' + time;
+  return d.toLocaleDateString('en-GB', { timeZone: TZ, day: 'numeric', month: 'short' }) + ' ' + time;
+}
+function ago(iso) {
+  if (!iso) return 'never';
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (m < 1) return 'just now'; if (m < 60) return m + ' min ago';
+  const h = Math.round(m / 60); if (h < 24) return h + ' h ago';
+  return fmtTime(iso);
+}
+function gmailLink(threadId) {
+  const who = state.settings?.sender_email || '0';
+  return `https://mail.google.com/mail/u/${encodeURIComponent(who)}/#all/${encodeURIComponent(threadId || '')}`;
+}
+
+/* ------------------------------ data ------------------------------ */
+async function load() {
+  if (!LIVE) { if (!state.settings) Object.assign(state, demoData()); recomputeDemo(); return render(); }
+  const [s, ind, st, log] = await Promise.all([
+    db.from('outreach_settings').select('*').eq('id', 1).single(),
+    db.from('industries').select('name,pitch').order('name'),
+    db.rpc('outreach_stats'),
+    db.from('email_log')
+      .select('id,direction,kind,step,subject,body,error,ai_fallback,thread_id,created_at,prospects(full_name,company,industry,email)')
+      .order('created_at', { ascending: false }).limit(300),
+  ]);
+  if (s.error && s.error.code === 'PGRST116') { toast('This login is not on the outreach admin list.'); return; }
+  const err = s.error || ind.error || st.error || log.error;
+  if (err) { toast('Load failed: ' + err.message); return; }
+  state = { settings: s.data, industries: ind.data, stats: st.data, log: log.data };
+  render();
+}
+
+async function saveSettings(patch, pitch) {
+  if (!LIVE) {
+    Object.assign(state.settings, patch);
+    if (pitch !== undefined) { const i = state.industries.find((x) => x.name === state.settings.target_industry); if (i) i.pitch = pitch; }
+    recomputeDemo(); render(); return true;
+  }
+  const r = await db.from('outreach_settings').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1);
+  if (r.error) { toast('Save failed: ' + r.error.message); return false; }
+  if (pitch !== undefined) {
+    const p = await db.from('industries').update({ pitch }).eq('name', patch.target_industry || state.settings.target_industry);
+    if (p.error) { toast('Pitch not saved: ' + p.error.message); return false; }
+  }
+  await load(); return true;
+}
+
+async function addIndustry(name) {
+  const pitch = 'BIYU AI Agency builds practical AI automations for ' + name.toLowerCase() +
+    ' businesses: handling customer enquiries on WhatsApp and email, automating repetitive admin and producing clear daily reports.';
+  if (!LIVE) { state.industries.push({ name, pitch }); state.industries.sort((a, b) => a.name.localeCompare(b.name)); return true; }
+  const r = await db.from('industries').insert({ name, pitch });
+  if (r.error) { toast('Could not add industry: ' + r.error.message); return false; }
+  const ind = await db.from('industries').select('name,pitch').order('name');
+  state.industries = ind.data || state.industries; return true;
+}
+
+/* ------------------------------ render ------------------------------ */
+function render() {
+  const s = state.settings, st = state.stats;
+  $('liveToggle').classList.toggle('live', !s.paused);
+  $('liveText').textContent = s.paused ? 'Paused' : 'Live';
+  $('lastRun').textContent = 'Workflow last checked in ' + ago(st.last_run_at) + ' · sends Mon–Fri ' +
+    String(s.window_start_hour).padStart(2, '0') + ':00–' + String(s.window_end_hour).padStart(2, '0') + ':00 CAT';
+
+  const contacted = st.contacted || 0;
+  const rate = contacted ? Math.round((st.replied / contacted) * 1000) / 10 : 0;
+  const pct = st.effective_limit ? Math.min(100, (st.sent_today / st.effective_limit) * 100) : 0;
+  const warm = st.effective_limit < s.daily_limit ? `Warm-up day ${st.warmup_day}: capped at ${st.effective_limit}` : `${st.followups_due} follow-ups due`;
+  const tiles = [
+    ['Sent today', `${st.sent_today}<small> / ${st.effective_limit}</small>`, warm, pct],
+    ['Emails sent', st.total_sent, st.ai_fallback_7d ? `${st.ai_fallback_7d} used the safe template (7 days)` : `${contacted} prospects contacted`],
+    ['Replies', st.replied, 'Emailed to you as they arrive'],
+    ['Reply rate', rate + '%', 'Replies ÷ prospects contacted'],
+    ['Opted out', st.opted_out, 'Never emailed again'],
+    ['Bounced', st.bounced, st.failed_today ? `${st.failed_today} failed sends today` : 'Suppressed automatically'],
+  ];
+  $('kpis').innerHTML = tiles.map(([l, v, n, m]) => `
+    <div class="kpi"><div class="label">${l}</div><div class="value">${v}</div>
+    ${m !== undefined ? `<div class="meter" title="${st.sent_today} of ${st.effective_limit} sent today"><span style="width:${m}%"></span></div>` : ''}
+    <div class="note">${esc(n)}</div></div>`).join('');
+
+  renderSettings();
+  renderReplies();
+  renderTable();
+  renderPipeline();
+}
+
+function renderSettings() {
+  const s = state.settings;
+  if (document.activeElement && document.activeElement.closest('aside')) return; // don't clobber typing
+  $('industry').innerHTML = state.industries.map((i) => `<option ${i.name === s.target_industry ? 'selected' : ''}>${esc(i.name)}</option>`).join('') +
+    '<option value="__new">＋ Add industry…</option>';
+  $('pitch').value = state.industries.find((i) => i.name === s.target_industry)?.pitch || '';
+  $('limit').value = s.daily_limit;
+  $('followups').value = String(s.max_followups);
+  $('notify').value = s.notify_email || '';
+  $('sender').value = s.sender_email || '';
+  updateLimitNote();
+}
+
+function updateLimitNote() {
+  const st = state.stats, v = +$('limit').value || 0;
+  const cap = st.warmup_day <= 7 ? 10 : st.warmup_day <= 14 ? 20 : st.warmup_day <= 21 ? 35 : null;
+  let note = cap && v > cap ? `Warm-up protects your domain: today's cap is ${cap}, then it rises weekly until it reaches ${v}.` :
+    'Includes follow-ups. Sends are spread randomly across the day.';
+  if (v > 50) note = 'Above 50/day from one mailbox raises spam risk. Consider a second mailbox instead.';
+  $('limitNote').textContent = note;
+}
+
+function renderReplies() {
+  const replies = state.log.filter((e) => e.kind === 'reply').slice(0, 5);
+  $('replyCount').textContent = state.stats.replied ? state.stats.replied + ' total' : '';
+  $('replies').innerHTML = replies.length ? replies.map((r) => `
+    <div class="reply">
+      <div class="top"><span class="who">${esc(r.prospects?.full_name || r.prospects?.email)}</span>
+        <span class="co">${esc(r.prospects?.company || '')}</span><span class="when">${fmtTime(r.created_at)}</span></div>
+      <div class="msg">${esc((r.body || '').slice(0, 280))}</div>
+      <a href="${gmailLink(r.thread_id)}" target="_blank" rel="noopener">Open in Gmail →</a>
+    </div>`).join('') : '<div class="empty">No replies yet. You\'ll get an email the moment one arrives.</div>';
+}
+
+function filtered() {
+  const q = view.q.toLowerCase();
+  return state.log.filter((e) => {
+    const f = view.filter;
+    if (f === 'sent' && !(e.kind === 'initial' || e.kind === 'followup')) return false;
+    if (f === 'followup' && e.kind !== 'followup') return false;
+    if (f === 'reply' && e.kind !== 'reply') return false;
+    if (f === 'problems' && !['opt_out', 'bounce'].includes(e.kind)) return false;
+    if (f === 'failed' && e.kind !== 'failed') return false;
+    if (!q) return true;
+    const p = e.prospects || {};
+    return [p.full_name, p.company, p.email, p.industry, e.subject].some((x) => String(x || '').toLowerCase().includes(q));
+  });
+}
+
+function renderTable() {
+  $('filters').innerHTML = FILTERS.map(([k, l]) => `<button class="chip ${view.filter === k ? 'on' : ''}" data-f="${k}">${l}</button>`).join('');
+  const list = filtered();
+  const shown = list.slice(0, view.shown);
+  $('rows').innerHTML = shown.length ? shown.map((e) => {
+    const p = e.prospects || {};
+    const step = e.kind === 'followup' ? ` ${e.step}` : '';
+    const extra = e.ai_fallback ? '<span class="tag" title="AI copy failed a check, safe template used">template</span>' : '';
+    const row = `<tr data-id="${e.id}">
+      <td class="time">${fmtTime(e.created_at)}</td>
+      <td><div>${esc(p.full_name || p.email || '—')}</div><div class="co">${esc(p.company || '')}${p.industry ? ' · ' + esc(p.industry) : ''}</div></td>
+      <td><span class="pill k-${e.kind}"><i></i>${KIND[e.kind]}${step}</span>${extra}</td>
+      <td class="subj">${esc(e.subject || '')}</td></tr>`;
+    const detail = view.open === e.id ? `<tr class="detail"><td colspan="4">${esc(e.error || e.body || '(no content stored)')}${
+      e.thread_id ? `\n\n<a href="${gmailLink(e.thread_id)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600;text-decoration:none">Open thread in Gmail →</a>` : ''}</td></tr>` : '';
+    return row + detail;
+  }).join('') : '<tr><td colspan="4" class="empty">Nothing here yet.</td></tr>';
+  $('more').classList.toggle('hidden', list.length <= view.shown);
+}
+
+function renderPipeline() {
+  const pl = state.stats.pipeline || {};
+  const max = Math.max(1, ...Object.values(pl));
+  $('pipeName').textContent = state.settings.target_industry;
+  const rows = STATUS_ORDER.filter(([k]) => pl[k] || k === 'new');
+  $('pipeline').innerHTML = rows.map(([k, l]) => `
+    <div class="pipe-row" title="${l}: ${pl[k] || 0}"><span class="l">${l}</span>
+      <div class="bar"><span style="width:${((pl[k] || 0) / max) * 100}%"></span></div><b>${pl[k] || 0}</b></div>`).join('') +
+    (!(pl.new) ? '<div class="warn" style="margin:6px 0 0">No new prospects left in this industry. Upload more or switch industry.</div>' : '');
+}
+
+/* ------------------------------ events ------------------------------ */
+$('filters').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-f]'); if (!b) return;
+  view.filter = b.dataset.f; view.shown = 25; view.open = null; renderTable();
+});
+$('search').addEventListener('input', (ev) => { view.q = ev.target.value; view.shown = 25; renderTable(); });
+$('more').addEventListener('click', () => { view.shown += 25; renderTable(); });
+$('rows').addEventListener('click', (ev) => {
+  if (ev.target.closest('a')) return;
+  const tr = ev.target.closest('tr[data-id]'); if (!tr) return;
+  const id = Number(tr.dataset.id); view.open = view.open === id ? null : id; renderTable();
+});
+$('refresh').addEventListener('click', () => load().then(() => toast('Updated')));
+
+$('liveToggle').addEventListener('click', async () => {
+  const s = state.settings;
+  if (s.paused && !s.sender_email) { toast('Add the "Send from" mailbox and save first'); $('sender').focus(); return; }
+  if (await saveSettings({ paused: !s.paused })) toast(state.settings.paused ? 'Outreach paused' : 'Outreach is live');
+});
+
+$('industry').addEventListener('change', async (ev) => {
+  if (ev.target.value === '__new') {
+    const name = (prompt('New industry name (must match the "industry" column in your CSV):') || '').trim();
+    if (name && !state.industries.some((i) => i.name.toLowerCase() === name.toLowerCase())) await addIndustry(name);
+    state.settings = { ...state.settings };
+    document.activeElement.blur(); renderSettings();
+    if (name) { $('industry').value = name; $('pitch').value = state.industries.find((i) => i.name === name)?.pitch || ''; }
+    return;
+  }
+  $('pitch').value = state.industries.find((i) => i.name === ev.target.value)?.pitch || '';
+});
+$('limit').addEventListener('input', updateLimitNote);
+
+$('save').addEventListener('click', async () => {
+  const limit = Math.round(+$('limit').value), notify = $('notify').value.trim(), sender = $('sender').value.trim();
+  const emailOk = (x) => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(x);
+  const w = $('formWarn');
+  let msg = '';
+  if (!(limit >= 0 && limit <= 150)) msg = 'Daily limit must be between 0 and 150.';
+  else if (!emailOk(notify)) msg = 'Enter a valid email for reply alerts.';
+  else if (sender && !emailOk(sender)) msg = 'The "Send from" mailbox isn\'t a valid email.';
+  else if ($('pitch').value.trim().length < 30) msg = 'Add a short description of the offer (at least a sentence).';
+  w.textContent = msg; w.classList.toggle('hidden', !msg);
+  if (msg) return;
+  const ok = await saveSettings({
+    target_industry: $('industry').value, daily_limit: limit, max_followups: +$('followups').value,
+    notify_email: notify, sender_email: sender,
+  }, $('pitch').value.trim());
+  if (ok) { $('saved').textContent = 'Saved ' + new Date().toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }); toast('Settings saved'); }
+});
+
+/* ------------------------------ CSV import ------------------------------ */
+$('drop').addEventListener('click', () => $('csv').click());
+$('csv').addEventListener('change', async (ev) => {
+  const file = ev.target.files[0]; if (!file) return;
+  const rows = parseCSV(await file.text());
+  ev.target.value = '';
+  if (rows.length < 2) { $('csvResult').textContent = 'The file looks empty.'; return; }
+  const head = rows[0].map((h) => h.trim().toLowerCase());
+  const col = (...names) => head.findIndex((h) => names.includes(h));
+  const ix = { email: col('email', 'e-mail', 'email address'), name: col('name', 'full name', 'full_name', 'contact'),
+    company: col('company', 'business', 'organisation', 'organization'), role: col('role', 'title', 'job title', 'job_title', 'position'),
+    linkedin: col('linkedin', 'linkedin link', 'linkedin url'), industry: col('industry', 'sector'), country: col('country'), notes: col('notes', 'note') };
+  if (ix.email < 0) { $('csvResult').textContent = 'No "email" column found.'; return; }
+  const seen = new Set(); let skipped = 0;
+  const get = (r, k) => (ix[k] >= 0 ? String(r[ix[k]] || '').trim() : '');
+  const clean = rows.slice(1).map((r) => ({
+    email: get(r, 'email').toLowerCase(), full_name: get(r, 'name') || null, company: get(r, 'company') || null,
+    job_title: get(r, 'role') || null, linkedin: get(r, 'linkedin') || null,
+    industry: get(r, 'industry') || $('industry').value, country: get(r, 'country') || 'Botswana', notes: get(r, 'notes') || null,
+  })).filter((p) => {
+    const good = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(p.email) && !seen.has(p.email);
+    if (!good) skipped++; else seen.add(p.email);
+    return good;
+  });
+  if (!clean.length) { $('csvResult').textContent = 'No valid email addresses found.'; return; }
+  if (!LIVE) {
+    $('csvResult').textContent = `Demo: ${clean.length} prospects read (${skipped} skipped). Connect Supabase to save them.`;
+    return;
+  }
+  let added = 0;
+  for (let i = 0; i < clean.length; i += 200) {
+    const r = await db.from('prospects').upsert(clean.slice(i, i + 200), { onConflict: 'email', ignoreDuplicates: true }).select('id');
+    if (r.error) { $('csvResult').textContent = 'Import stopped: ' + r.error.message; return; }
+    added += (r.data || []).length;
+  }
+  $('csvResult').textContent = `Added ${added} new prospects. ${clean.length - added} already existed, ${skipped} rows skipped.`;
+  load();
+});
+function parseCSV(text) {
+  const out = []; let row = [], cur = '', q = false;
+  text = text.replace(/^\uFEFF/, '');
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"' && text[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === ',' || c === ';' && !text.slice(0, 500).includes(',')) { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur); if (row.some((x) => x.trim())) out.push(row); row = []; cur = ''; }
+    else cur += c;
+  }
+  row.push(cur); if (row.some((x) => x.trim())) out.push(row);
+  return out;
+}
+
+/* ------------------------------ demo data ------------------------------ */
+function demoData() {
+  const people = [
+    ['Kabo Molefe', 'Mophane Wholesalers', 'Retail & Distribution'], ['Neo Seretse', 'Tlhabologo Clinic', 'Clinics'],
+    ['Lesedi Kgosi', 'Kalahari Fresh Distributors', 'Retail & Distribution'], ['Tumelo Dube', 'Serowe Cash & Carry', 'Retail & Distribution'],
+    ['Boitumelo Phiri', 'Maun Family Practice', 'Clinics'], ['Onalenna Tau', 'Letlhakane Hardware', 'Retail & Distribution'],
+    ['Mpho Ramotswe', 'Chobe Traders', 'Retail & Distribution'], ['Dr Amira Haddad', 'Pearl Smile Dental', 'Dental (UAE)'],
+    ['Katlego Moeng', 'Francistown Beverages', 'Retail & Distribution'], ['Goitse Sebego', 'Palapye Pharmacy Supplies', 'Retail & Distribution'],
+    ['Refilwe Nkwe', 'Gaborone West Clinic', 'Clinics'], ['Tebogo Mothibi', 'Mahalapye Superstore', 'Retail & Distribution'],
+    ['Dr Omar Saeed', 'Corniche Dental Care', 'Dental (UAE)'], ['Masego Gaolathe', 'Kanye Agro Distributors', 'Retail & Distribution'],
+    ['Thato Keabetswe', 'Molepolole Wholesale', 'Retail & Distribution'], ['Dineo Modise', 'Lobatse Building Supplies', 'Retail & Distribution'],
+  ];
+  const subjects = ['Orders from WhatsApp, in one place', 'Stock alerts for {c}', 'Less invoice admin at {c}', 'Quick question for {c}', 'Bookings on WhatsApp for {c}'];
+  const replies = ['Hi Ofentse, this is timely. We lose orders on WhatsApp every week. Can we talk Tuesday afternoon?',
+    'Thanks for reaching out. Please send me a short proposal and pricing, I\'ll share it with our GM.',
+    'Interesting. We already use a POS system, would this connect to it?',
+    'Not right now, maybe early next year. Please check back in January.'];
+  const log = []; let id = 1;
+  const now = Date.now(), day = 86400000;
+  people.forEach(([name, company, industry], i) => {
+    const p = { full_name: name, company, industry, email: name.split(' ').slice(-1)[0].toLowerCase() + '@' + company.split(' ')[0].toLowerCase() + '.co.bw' };
+    const d0 = new Date(now - (i % 10) * day); d0.setUTCHours(6 + (i % 7), (i * 17) % 60, 0, 0);
+    const t0 = Math.min(d0.getTime(), now - 20 * 60000);
+    const subj = subjects[i % subjects.length].replace('{c}', company);
+    const tid = 't' + (1000 + i);
+    log.push({ id: id++, kind: 'initial', step: 0, subject: subj, created_at: new Date(t0).toISOString(), prospects: p, thread_id: tid, ai_fallback: i === 6,
+      body: `Hi ${name.replace(/^Dr /, '').split(' ')[0]},\n\nRunning ${company} means requests arrive from every direction...\n\nOfentse Gabana\nFounding Growth Lead, BIYU AI Agency` });
+    if (i % 4 === 1 && i !== 1) log.push({ id: id++, kind: 'reply', step: 0, subject: 'Re: ' + subj, created_at: new Date(Math.min(t0 + 3 * 3600000, now - 5 * 60000)).toISOString(), prospects: p, thread_id: tid, body: replies[((i - 5) / 4) % replies.length] });
+    else if (i === 6) log.push({ id: id++, kind: 'opt_out', subject: 'Re: ' + subj, created_at: new Date(t0 + 7200000).toISOString(), prospects: p, thread_id: tid, body: 'Stop' });
+    else if (i === 10) log.push({ id: id++, kind: 'bounce', subject: 'Delivery Status Notification (Failure)', created_at: new Date(t0 + 60000).toISOString(), prospects: p, thread_id: tid, body: 'Address not found' });
+    else if (t0 + 3 * day < now) {
+      log.push({ id: id++, kind: 'followup', step: 1, subject: 'Re: ' + subj, created_at: new Date(t0 + 3 * day + 3600000).toISOString(), prospects: p, thread_id: tid, body: 'Hi, just bringing my note back to the top of your inbox...' });
+      if (i === 14) log.push({ id: id++, kind: 'reply', step: 1, subject: 'Re: ' + subj, created_at: new Date(t0 + 3 * day + 9000000).toISOString(), prospects: p, thread_id: tid, body: replies[3] });
+    }
+  });
+  log.push({ id: id++, kind: 'auto_reply', subject: 'Automatic reply: Re: Stock alerts', created_at: new Date(now - 2 * day).toISOString(), prospects: { full_name: 'Tebogo Mothibi', company: 'Mahalapye Superstore', industry: 'Retail & Distribution' }, body: 'I am out of the office until Monday.' });
+  log.push({ id: id++, kind: 'failed', subject: 'Quick question for Kasane Lodge Supplies', created_at: new Date(now - day).toISOString(), prospects: { full_name: 'Naledi Ntsima', company: 'Kasane Lodge Supplies', industry: 'Retail & Distribution' }, error: '[bad address] 400 Invalid To header' });
+  log.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  return {
+    settings: { target_industry: 'Retail & Distribution', daily_limit: 30, max_followups: 2, paused: false, notify_email: 'gabanaofentse1@gmail.com',
+      sender_email: 'ofentse@biyu.agency', window_start_hour: 8, window_end_hour: 16, warmup_day: 12 },
+    industries: [
+      { name: 'Clinics', pitch: 'BIYU AI Agency builds a WhatsApp AI booking agent for private clinics: patients can book, reschedule and get reminders on WhatsApp at any hour, which takes pressure off the front desk and helps cut missed appointments.' },
+      { name: 'Dental (UAE)', pitch: 'BIYU AI Agency builds a bilingual (English and Arabic) WhatsApp AI booking agent for dental clinics: patients book, reschedule and receive reminders on WhatsApp around the clock, freeing up reception and helping reduce no-shows.' },
+      { name: 'Retail & Distribution', pitch: 'BIYU AI Agency builds automations for retailers, wholesalers and distributors: capturing orders from WhatsApp and email, stock-level alerts, automatic invoices, instant replies to customer enquiries and daily sales reports.' },
+    ],
+    log,
+  };
+}
+function recomputeDemo() {
+  const s = state.settings, log = state.log;
+  const today = new Date().toLocaleDateString('en-GB', { timeZone: TZ });
+  const out = log.filter((e) => e.kind === 'initial' || e.kind === 'followup');
+  const byKind = (k) => new Set(log.filter((e) => e.kind === k).map((e) => e.prospects.email)).size;
+  const wd = s.warmup_day;
+  const cap = wd <= 7 ? 10 : wd <= 14 ? 20 : wd <= 21 ? 35 : 1e9;
+  const inds = {}; log.filter((e) => e.kind === 'initial').forEach((e) => (inds[e.prospects.industry] = (inds[e.prospects.industry] || 0) + 1));
+  const n = inds[s.target_industry] || 0;
+  state.stats = {
+    sent_today: out.filter((e) => new Date(e.created_at).toLocaleDateString('en-GB', { timeZone: TZ }) === today).length,
+    effective_limit: Math.min(s.daily_limit, cap), warmup_day: wd,
+    total_sent: out.length, contacted: log.filter((e) => e.kind === 'initial').length,
+    replied: byKind('reply'), opted_out: byKind('opt_out'), bounced: byKind('bounce'),
+    failed_today: 0, followups_due: 3,
+    pipeline: { new: s.target_industry === 'Retail & Distribution' ? 118 : 34, contacted: Math.max(0, n - 4), replied: Math.min(3, n), completed: 2, opted_out: n ? 1 : 0, bounced: n ? 1 : 0 },
+    last_run_at: new Date(Date.now() - 6 * 60000).toISOString(),
+  };
+}
+
+/* ------------------------------ boot ------------------------------ */
+async function boot() {
+  if (!LIVE) {
+    $('modeBadge').classList.remove('hidden');
+    $('app').classList.remove('hidden');
+    return load();
+  }
+  await new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    sc.onload = res; sc.onerror = () => rej(new Error('Could not load Supabase library'));
+    document.head.appendChild(sc);
+  });
+  db = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  const { data } = await db.auth.getSession();
+  if (data.session) return start();
+  $('login').classList.remove('hidden');
+  const go = async () => {
+    const { error } = await db.auth.signInWithPassword({ email: $('lg-email').value.trim(), password: $('lg-pass').value });
+    if (error) { $('lg-err').textContent = error.message; $('lg-err').classList.remove('hidden'); return; }
+    $('login').classList.add('hidden'); start();
+  };
+  $('lg-btn').addEventListener('click', go);
+  $('lg-pass').addEventListener('keydown', (e) => e.key === 'Enter' && go());
+}
+async function start() {
+  $('app').classList.remove('hidden');
+  $('signout').classList.remove('hidden');
+  $('signout').onclick = async () => { await db.auth.signOut(); location.reload(); };
+  await load();
+  setInterval(() => { if (!document.hidden) load(); }, 60000);
+}
+boot().catch((e) => { document.body.innerHTML = '<p style="padding:24px">' + esc(e.message) + '</p>'; });
+</script>
+</body>
+</html>

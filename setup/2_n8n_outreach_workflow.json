@@ -1,0 +1,700 @@
+{
+  "name": "BIYU Outreach — Auto Email + Follow-ups + Reply Alerts",
+  "nodes": [
+    {
+      "id": "c18773e4-bc19-45bd-a3b4-0bb1b194a731",
+      "name": "Note: Sender",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -300
+      ],
+      "parameters": {
+        "content": "## 1 · Sender (every 15 min, Mon–Fri 08:00–16:00 CAT)\nPulls due follow-ups first (3 days after the last email), then new prospects in the **target industry** from the dashboard. Spreads sends randomly through the day and never passes the daily limit (with automatic warm-up). AI writes the copy, the validator checks it, a safe template is used if anything looks off.\n\n**Test it:** click *Execute workflow* on **Test: preview next email** — it emails the next queued message to YOUR notify address and changes nothing.",
+        "width": 2560,
+        "height": 700,
+        "color": 7
+      }
+    },
+    {
+      "id": "1249facc-bc13-4787-ba74-a750c9aeeb61",
+      "name": "Note: Replies",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        440
+      ],
+      "parameters": {
+        "content": "## 2 · Reply watcher (checks Gmail every minute)\nMatches replies to prospects by thread or sender. Real reply → stops follow-ups + emails you. \"stop\"/unsubscribe → do-not-contact list. Bounces → suppressed. Out-of-office → ignored.",
+        "width": 1100,
+        "height": 330,
+        "color": 4
+      }
+    },
+    {
+      "id": "2d12b203-93a7-4519-9013-b085f16d4111",
+      "name": "Note: Errors",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        440
+      ],
+      "parameters": {
+        "content": "## 3 · Error alerts\nIf any node crashes, you get an email. (Failed sends are handled inside lane 1: logged, retried later, and outreach auto-pauses after 3 failures in an hour.)",
+        "width": 640,
+        "height": 330,
+        "color": 3
+      }
+    },
+    {
+      "id": "e8321ef2-89f2-4f29-bb7c-0442acaf9327",
+      "name": "Note: Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1780,
+        440
+      ],
+      "parameters": {
+        "content": "## Setup (5 min)\n1. Credentials: **Postgres** (Supabase session pooler), **Gmail OAuth2** (the sending mailbox), **Header Auth** named *DeepSeek* (Authorization = Bearer <key>).\n2. Open every node with a ⚠️ and pick the credential.\n3. Workflow settings → timezone should read **Africa/Gaborone**.\n4. Run the test preview, then **Publish** (older n8n: **Activate**) and switch Outreach to **Live** on the dashboard.",
+        "width": 700,
+        "height": 330,
+        "color": 6
+      }
+    },
+    {
+      "id": "daaff40c-0364-4ed8-9373-b4517a22a08e",
+      "name": "Every 15 min (weekdays)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 8-15 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a05bd181-50bf-46cb-8809-10e3b5f4f264",
+      "name": "Test: preview next email",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        220
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "04be2b3f-34c5-4aae-bc91-82f18d28160a",
+      "name": "Scheduled run",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "65238146-3a28-4db1-8bf6-7b0f4c5b89a4",
+              "name": "test",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a0fa6442-d9bb-4098-b05a-ce60cdc538d1",
+      "name": "Test run",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        220
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ebbed24a-3e3c-49da-8306-cfef5f593ef9",
+              "name": "test",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d4bdc609-b5fa-411f-819c-479db316e992",
+      "name": "Random delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ],
+      "webhookId": "ae5de7ae-6497-43bc-86f9-0b15a2c249ec",
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 235) + 5 }}",
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "fc502526-01d3-439a-a1e6-51cbfb8e5b4c",
+      "name": "Get send queue",
+      "typeVersion": 2.5,
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        660,
+        110
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select * from public.get_send_queue($1::boolean);",
+        "options": {
+          "queryReplacement": "={{ $json.test }}"
+        }
+      }
+    },
+    {
+      "id": "dfdc745b-a866-4564-bd73-995ac580d58d",
+      "name": "Prepare AI prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        110
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// n8n Code node: \"Prepare AI prompt\"  (mode: Run Once for Each Item)\n// Input: one row from get_send_queue. Output: the row + the DeepSeek request body.\nconst p = $json;\nconst isFollowUp = p.kind === 'followup';\nconst isFinal = isFollowUp && p.step >= p.max_followups;\n\nlet emailType = 'initial';\nlet guidance = 'First contact. Show you understand their kind of business, explain the offer in plain words, end with one low-pressure question about a short call.';\nif (isFollowUp && !isFinal) {\n  emailType = `follow-up ${p.step} of ${p.max_followups}`;\n  guidance = 'Short, friendly nudge in the same thread. Do not repeat the first email. Add one new, concrete angle from the offer. End with a simple yes/no question.';\n} else if (isFinal) {\n  emailType = 'final follow-up';\n  guidance = 'Politely close the loop: say this is the last note, make it easy to reply later or point you to the right person. No pressure.';\n}\n\nconst system = [\n  `You write short, personal B2B cold emails for ${p.sender_name}, ${p.sender_title}, based in Gaborone, Botswana.`,\n  'Rules:',\n  '- Plain text only. No links, no emojis, no bullet points, no markdown.',\n  '- Initial email: 60 to 110 words. Follow-ups: 25 to 70 words.',\n  `- Start with exactly \"Hi ${p.first_name || 'there'},\".`,\n  '- In the initial email, mention the company name naturally once.',\n  '- Use only the facts provided. Never invent statistics, percentages, prices, client names, results, or claims about the prospect.',\n  '- One clear, low-pressure call to action, phrased as a question.',\n  '- Do NOT add a sign-off, signature, or unsubscribe line. They are added automatically.',\n  '- No filler like \"I hope this email finds you well\". Warm, direct, human, not salesy.',\n  'Return only JSON: {\"subject\": \"...\", \"body\": \"...\"}.',\n  'Subject: 2 to 7 words, specific, no clickbait, no exclamation marks, no emojis. For follow-ups return an empty subject.',\n].join('\\n');\n\nconst user = JSON.stringify({\n  email_type: emailType,\n  guidance,\n  prospect: {\n    first_name: p.first_name || '',\n    company: String(p.company || '').replace(/\\s*\\(pty\\)/gi, '').replace(/\\s+(pty|ltd|limited|inc|llc)\\.?(?=\\s|$)/gi, '').replace(/\\s{2,}/g, ' ').trim(),\n    job_title: p.job_title || '',\n    industry: p.industry,\n    country: p.country || '',\n    notes: p.notes || '',\n  },\n  our_offer: p.pitch,\n  previous_subject: p.first_subject || '',\n});\n\nreturn {\n  json: {\n    ...p,\n    ai_body: {\n      model: 'deepseek-flash', // or 'deepseek-v4-pro' for the larger model\n      response_format: { type: 'json_object' },\n      max_tokens: 800,\n      temperature: 0.7,\n      messages: [\n        { role: 'system', content: system },\n        { role: 'user', content: user },\n      ],\n    },\n  },\n};\n"
+      }
+    },
+    {
+      "id": "7707be09-b444-439e-a212-8f7e6e80a238",
+      "name": "DeepSeek: write email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        110
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.ai_body) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "c24bf7e1-632e-448b-b051-0f76307c3d07",
+      "name": "Validate & build email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        110
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// n8n Code node: \"Validate & build email\"  (mode: Run Once for Each Item)\n// Input: DeepSeek response (or an error). Checks the AI copy with strict rules and\n// falls back to a safe template if anything looks off. Then builds the raw email\n// (plain text, threaded follow-ups, List-Unsubscribe header) for the Gmail API.\nconst p = $('Prepare AI prompt').item.json;\nconst isFollowUp = p.kind === 'followup';\nconst isFinal = isFollowUp && p.step >= p.max_followups;\nconst first = (p.first_name || '').trim();\nconst company = String(p.company || '').replace(/\\s*\\(pty\\)/gi, '').replace(/\\s+(pty|ltd|limited|inc|llc)\\.?(?=\\s|$)/gi, '').replace(/\\s{2,}/g, ' ').trim();\nconst reasons = [];\n\n// ---------- 1. read AI output ----------\nlet ai = null;\ntry {\n  const content = $json?.choices?.[0]?.message?.content;\n  if (!content) throw new Error('no AI content' + ($json?.error ? ': ' + JSON.stringify($json.error).slice(0, 200) : ''));\n  ai = JSON.parse(content);\n} catch (e) {\n  reasons.push('AI unavailable: ' + e.message);\n}\n\nconst words = (s) => (s.match(/\\S+/g) || []).length;\n\nfunction cleanBody(b) {\n  b = String(b || '').replace(/\\r/g, '').trim();\n  // remove any sign-off the model added anyway\n  b = b.replace(/\\n+\\s*(best( regards)?|kind regards|warm regards|regards|many thanks|thanks|thank you|cheers|sincerely)[,!.]?\\s*(\\n[\\s\\S]{0,120})?$/i, '').trim();\n  b = b.replace(/\\n{3,}/g, '\\n\\n');\n  return b;\n}\n\nfunction check(subject, body) {\n  const r = [];\n  const all = subject + '\\n' + body;\n  const n = words(body);\n  if (!isFollowUp && (n < 40 || n > 140)) r.push(`length ${n} words`);\n  if (isFollowUp && (n < 12 || n > 90)) r.push(`length ${n} words`);\n  if (/[\\[\\]{}<>]/.test(all)) r.push('placeholder/brackets');\n  if (/\\b(your name|company name|first name|insert|lorem)\\b/i.test(all)) r.push('template text');\n  if (/https?:\\/\\/|www\\.|\\.com\\b|\\.co\\.bw\\b/i.test(body)) r.push('contains link');\n  if (/\\d+\\s?%/.test(all)) r.push('invented statistic');\n  if (/\\b(as an ai|language model|chatgpt|openai)\\b/i.test(all)) r.push('AI giveaway');\n  if (/\\bguarantee/i.test(all)) r.push('guarantee claim');\n  const g = body.match(/^\\s*(hi|hello|hey|dear|dumela|good (morning|afternoon))\\s+([^,\\n!]+)/i);\n  const expected = (first || 'there').toLowerCase();\n  if (!g) r.push('missing greeting');\n  else if (g[3].trim().toLowerCase() !== expected) r.push(`wrong name \"${g[3].trim()}\"`);\n  if (!isFollowUp && company) {\n    const key = company.toLowerCase().replace(/\\b(pty|ltd|limited|\\(pty\\)|inc|llc)\\b/g, '').replace(/[().,]/g, '').trim().split(/\\s+/)[0];\n    if (key && !body.toLowerCase().includes(key)) r.push('company not mentioned');\n  }\n  if (!isFollowUp) {\n    if (subject.length < 3 || subject.length > 70) r.push('subject length');\n    if (/[\\n!]/.test(subject)) r.push('subject format');\n    if (subject === subject.toUpperCase() && /[A-Z]{4,}/.test(subject)) r.push('subject all caps');\n  }\n  return r;\n}\n\nlet subject = '', body = '', aiFallback = false;\nif (ai) {\n  subject = String(ai.subject || '').replace(/^[\"'\\s]+|[\"'\\s]+$/g, '').replace(/\\s+/g, ' ');\n  body = cleanBody(ai.body);\n  reasons.push(...check(subject, body));\n}\n\n// ---------- 2. fallback template (deterministic, always safe) ----------\nif (reasons.length) {\n  aiFallback = true;\n  const hi = `Hi ${first || 'there'},`;\n  const who = company || 'your team';\n  const senderFirst = (p.sender_name || '').split(' ')[0] || p.sender_name;\n  const offer = String(p.pitch || '')\n    .replace(/^BIYU AI Agency (build|help|create|make|design|automate)s\\b/i, 'We $1')\n    .trim();\n  if (!isFollowUp) {\n    subject = company ? `Quick question for ${company}` : 'Quick question';\n    body = `${hi}\\n\\nI'm ${senderFirst} from BIYU AI Agency. ${offer}\\n\\nWould a short 15-minute call be worth it to see if this could help ${who}?`;\n  } else if (!isFinal) {\n    body = `${hi}\\n\\nJust bringing my note back to the top of your inbox. Would a quick call next week make sense, or is there someone else at ${who} I should speak to?`;\n  } else {\n    body = `${hi}\\n\\nI'll close the loop here so I don't crowd your inbox. If this becomes a priority for ${who} later, just reply to this email and I'll pick it up.`;\n  }\n}\n\n// ---------- 3. final email text ----------\nif (isFollowUp) subject = 'Re: ' + String(p.first_subject || subject || 'Quick question').replace(/^re:\\s*/i, '');\nconst signature = `\\n\\n${p.sender_name}\\n${p.sender_title}`;\nconst optOut = `\\n\\nIf this isn't relevant, just reply \"stop\" and I won't email you again.`;\nconst fullBody = body + signature + optOut;\n\n// ---------- 4. raw MIME for the Gmail API ----------\nconst isTest = p.is_test === true || p.is_test === 'true';\nconst to = isTest ? p.notify_email : p.email;\nconst finalSubject = isTest ? `[TEST to ${p.email}] ${subject}` : subject;\nconst ascii = (s) => /^[\\x20-\\x7e]*$/.test(s);\nconst encWord = (s) => (ascii(s) ? s : '=?UTF-8?B?' + Buffer.from(s, 'utf8').toString('base64') + '?=');\nconst headers = [];\nif (p.sender_email) {\n  const name = String(p.sender_name || '').replace(/[\"\\\\\\r\\n]/g, '');\n  headers.push(`From: ${ascii(name) ? `\"${name}\"` : encWord(name)} <${p.sender_email}>`);\n  headers.push(`List-Unsubscribe: <mailto:${p.sender_email}?subject=unsubscribe>`);\n}\nheaders.push(`To: ${to}`);\nheaders.push(`Subject: ${encWord(finalSubject)}`);\nconst threaded = isFollowUp && !isTest && p.thread_id;\nif (threaded && p.rfc_message_id) {\n  headers.push(`In-Reply-To: ${p.rfc_message_id}`);\n  headers.push(`References: ${p.rfc_message_id}`);\n}\nheaders.push('MIME-Version: 1.0', 'Content-Type: text/plain; charset=\"UTF-8\"', 'Content-Transfer-Encoding: base64');\nconst b64 = Buffer.from(fullBody, 'utf8').toString('base64').replace(/.{1,76}/g, '$&\\r\\n');\nconst raw = Buffer.from(headers.join('\\r\\n') + '\\r\\n\\r\\n' + b64, 'utf8')\n  .toString('base64').replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\n\nconst gmail_payload = threaded ? { raw, threadId: p.thread_id } : { raw };\n\nreturn {\n  json: {\n    prospect_id: p.prospect_id,\n    email: p.email,\n    kind: p.kind,\n    step: p.step,\n    is_test: isTest,\n    subject,\n    body: fullBody,\n    ai_fallback: aiFallback,\n    fallback_reasons: reasons,\n    gmail_payload,\n  },\n};\n"
+      }
+    },
+    {
+      "id": "23477a51-4ca9-4c9d-a27e-f629e672654b",
+      "name": "Gmail: send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        110
+      ],
+      "onError": "continueErrorOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.gmail_payload) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "5b2af958-88b0-4d7b-9087-ad9f57595632",
+      "name": "Gmail: get Message-ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "parameters": {
+        "method": "GET",
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=Message-ID",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      }
+    },
+    {
+      "id": "a8eba950-64d1-4921-94ec-e20a7827ae70",
+      "name": "Prepare log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// n8n Code node: \"Prepare log\"  (mode: Run Once for Each Item)\n// Input: Gmail \"get message\" metadata. Combines it with the send result for record_sent().\nconst built = $('Validate & build email').item.json;\nconst sent = $('Gmail: send').item.json;\nconst hdrs = $json?.payload?.headers || [];\nconst mid = hdrs.find((h) => String(h.name).toLowerCase() === 'message-id');\nreturn {\n  json: {\n    prospect_id: built.prospect_id,\n    kind: built.kind,\n    step: built.step,\n    is_test: built.is_test,\n    subject: built.subject,\n    body: built.body,\n    ai_fallback: built.ai_fallback,\n    gmail_id: sent.id || '',\n    thread_id: sent.threadId || '',\n    rfc_message_id: mid ? mid.value : '',\n  },\n};\n"
+      }
+    },
+    {
+      "id": "1ff0c0c4-2318-4930-8e83-ffe6920a09db",
+      "name": "Log sent",
+      "typeVersion": 2.5,
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        2200,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select public.record_sent($1::jsonb) as logged;",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify($json) }}"
+        }
+      }
+    },
+    {
+      "id": "fc35903e-8fb4-43f5-894d-73065e277508",
+      "name": "Classify send error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        230
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// n8n Code node: \"Classify send error\"  (mode: Run Once for Each Item)\n// Input: error item from \"Gmail: send\". Decides whether the address is bad\n// (burn only this prospect) or the problem is global (limits, expired login).\nconst built = $('Validate & build email').item.json;\nconst e = $json.error ?? $json;\nconst text = typeof e === 'string' ? e : JSON.stringify(e);\nconst recipientProblem = /invalid to header|invalid recipient|recipient address|invalid email address|address rejected|no such user/i.test(text);\nreturn {\n  json: {\n    prospect_id: built.prospect_id,\n    kind: built.kind,\n    step: built.step,\n    is_test: built.is_test,\n    subject: built.subject,\n    recipient_problem: recipientProblem,\n    error: text.slice(0, 900),\n  },\n};\n"
+      }
+    },
+    {
+      "id": "584dea19-580c-4814-9a6c-79051d7c59ea",
+      "name": "Log failure",
+      "typeVersion": 2.5,
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        1980,
+        230
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select * from public.record_failed($1::jsonb);",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify($json) }}"
+        }
+      }
+    },
+    {
+      "id": "a14eca79-bbcd-4cd0-a66d-3400493e323b",
+      "name": "Alert me",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2200,
+        230
+      ],
+      "webhookId": "a0e0c556-c765-429b-bb4e-5687510903da",
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.notify_email }}",
+        "subject": "={{ $json.alert_subject }}",
+        "emailType": "text",
+        "message": "={{ $json.alert_body }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "BIYU Outreach"
+        }
+      }
+    },
+    {
+      "id": "83832f65-70c7-4529-95eb-723042a30777",
+      "name": "New email in inbox",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        600
+      ],
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "in:inbox -from:me"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "70182a85-9c14-4990-a43f-5456956c2eb8",
+      "name": "Classify inbound",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// n8n Code node: \"Classify inbound\"  (mode: Run Once for Each Item)\n// Input: a Gmail Trigger message (Simplify OFF). Works out if it is a real reply,\n// an opt-out, a bounce or an auto-reply, and strips the quoted history.\nconst m = $json;\nconst header = (name) => {\n  const v = m.headers?.[name.toLowerCase()];\n  return v ? String(v).replace(/^[^:]+:\\s*/, '').trim() : '';\n};\nconst fromEmail = String(m.from?.value?.[0]?.address || m.from?.text || m.From || '').toLowerCase();\nconst subject = String(m.subject || m.Subject || '');\nlet text = String(m.text || m.snippet || '');\nif (!text && m.html) text = String(m.html).replace(/<style[\\s\\S]*?<\\/style>/gi, '').replace(/<br\\s*\\/?>/gi, '\\n').replace(/<[^>]+>/g, ' ');\n\n// keep only the new part of the reply\nlet clean = text.replace(/\\r/g, '');\nconst cuts = [\n  /(^|\\n)\\s*On [\\s\\S]{0,300}?wrote:/i,\n  /(^|\\n)-{2,}\\s*Original Message\\s*-{2,}/i,\n  /(^|\\n)_{5,}/,\n  /(^|\\n)From:\\s[^\\n]+\\n(Sent|Date):/i,\n  /(^|\\n)Sent from my /i,\n];\nfor (const re of cuts) {\n  const i = clean.search(re);\n  if (i > 0) clean = clean.slice(0, i);\n}\nclean = clean.split('\\n').filter((l) => !l.trim().startsWith('>')).join('\\n').replace(/\\n{3,}/g, '\\n\\n').trim();\nconst wordCount = (clean.match(/\\S+/g) || []).length;\nconst opening = clean.slice(0, 300);\n\nconst autoSubmitted = header('auto-submitted');\nconst isBounce = /mailer-daemon|postmaster/i.test(fromEmail) ||\n  /delivery status notification|undeliverable|delivery (has )?failed|mail delivery (failed|subsystem)|returned mail|address not found/i.test(subject);\nconst isAuto = (autoSubmitted && !/^no$/i.test(autoSubmitted)) || !!header('x-autoreply') || !!header('x-autorespond') ||\n  /auto_reply/i.test(header('precedence')) ||\n  /(out of (the )?office|automatic reply|auto[- ]?reply|autoreply|on leave|away from (the )?office)/i.test(subject);\nconst isOptOut = /\\bunsubscribe\\b/i.test(subject) ||\n  /\\b(unsubscribe|remove me|take me off|opt[ -]?out|do not (contact|email) me|don'?t (contact|email) me|stop (emailing|contacting|sending))\\b/i.test(opening) ||\n  (wordCount <= 5 && /\\bstop\\b/i.test(clean));\n\nconst kind = isBounce ? 'bounce' : isAuto ? 'auto_reply' : isOptOut ? 'opt_out' : 'reply';\n\nreturn {\n  json: {\n    kind,\n    gmail_id: m.id,\n    thread_id: m.threadId,\n    from_email: fromEmail,\n    subject,\n    body: clean.slice(0, 4000),\n    snippet: clean.slice(0, 600),\n  },\n};\n"
+      }
+    },
+    {
+      "id": "64200e1b-a957-4707-bd41-6fd23c04e91c",
+      "name": "Match & record",
+      "typeVersion": 2.5,
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        440,
+        600
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select * from public.record_inbound($1::jsonb);",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify($json) }}"
+        }
+      }
+    },
+    {
+      "id": "6d624184-5c97-494a-a8a3-1bd3dff6c00c",
+      "name": "Notify me of reply",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        600
+      ],
+      "webhookId": "e30f19bf-22d4-4dce-a2a0-162851e5367b",
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.notify_email }}",
+        "subject": "={{ '🔔 Reply from ' + ($json.full_name || $json.email) + ($json.company ? ' (' + $json.company + ')' : '') }}",
+        "emailType": "text",
+        "message": "={{ ($json.full_name || $json.email) + ($json.company ? ' from ' + $json.company : '') }} replied to your outreach.\n\nIndustry: {{ $json.industry }}\nEmail: {{ $json.email }}\nReplied after: {{ $json.step > 0 ? 'follow-up ' + $json.step : 'the first email' }}\n\nTheir reply:\n\"{{ $json.snippet }}\"\n\nOpen the thread: https://mail.google.com/mail/u/{{ $json.sender_email || 0 }}/#all/{{ $json.thread_id }}\n\nFollow-ups to this prospect have been stopped automatically.",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "BIYU Outreach"
+        }
+      }
+    },
+    {
+      "id": "a3fb7127-bc1c-41e0-8427-e0741e6da189",
+      "name": "On workflow error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        600
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "318373b3-f597-4ca1-b0be-6d287ef946fc",
+      "name": "Email error alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1340,
+        600
+      ],
+      "webhookId": "e272f7fc-aee1-4b89-b9df-5f348addee86",
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "gabanaofentse1@gmail.com",
+        "subject": "={{ 'BIYU Outreach error in ' + ($json.execution?.lastNodeExecuted || 'workflow') }}",
+        "emailType": "text",
+        "message": "=The outreach workflow hit an error.\n\nNode: {{ $json.execution?.lastNodeExecuted }}\nError: {{ $json.execution?.error?.message }}\nExecution: {{ $json.execution?.url }}\n\nFailed sends are retried automatically. If this repeats, check the Gmail, DeepSeek and Postgres credentials in n8n.",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "BIYU Outreach"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 15 min (weekdays)": {
+      "main": [
+        [
+          {
+            "node": "Scheduled run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test: preview next email": {
+      "main": [
+        [
+          {
+            "node": "Test run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scheduled run": {
+      "main": [
+        [
+          {
+            "node": "Random delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Random delay": {
+      "main": [
+        [
+          {
+            "node": "Get send queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test run": {
+      "main": [
+        [
+          {
+            "node": "Get send queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get send queue": {
+      "main": [
+        [
+          {
+            "node": "Prepare AI prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare AI prompt": {
+      "main": [
+        [
+          {
+            "node": "DeepSeek: write email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek: write email": {
+      "main": [
+        [
+          {
+            "node": "Validate & build email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & build email": {
+      "main": [
+        [
+          {
+            "node": "Gmail: send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: send": {
+      "main": [
+        [
+          {
+            "node": "Gmail: get Message-ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Classify send error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: get Message-ID": {
+      "main": [
+        [
+          {
+            "node": "Prepare log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare log": {
+      "main": [
+        [
+          {
+            "node": "Log sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify send error": {
+      "main": [
+        [
+          {
+            "node": "Log failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log failure": {
+      "main": [
+        [
+          {
+            "node": "Alert me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New email in inbox": {
+      "main": [
+        [
+          {
+            "node": "Classify inbound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify inbound": {
+      "main": [
+        [
+          {
+            "node": "Match & record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match & record": {
+      "main": [
+        [
+          {
+            "node": "Notify me of reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On workflow error": {
+      "main": [
+        [
+          {
+            "node": "Email error alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Gaborone",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
