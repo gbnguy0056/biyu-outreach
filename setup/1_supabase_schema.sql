@@ -60,6 +60,7 @@ create table if not exists public.prospects (
   industry       text not null,
   country        text default 'Botswana',
   notes          text,          -- optional personalisation hook, e.g. "just opened a 3rd branch"
+  added_by       text,          -- email of the dashboard admin who uploaded/added this lead (null = added before multi-user support)
   status         text not null default 'new'
                  check (status in ('new','contacted','replied','completed','opted_out','bounced','invalid')),
   followups_sent int  not null default 0,
@@ -76,6 +77,7 @@ create table if not exists public.prospects (
 create index if not exists prospects_industry_status_idx on public.prospects (industry, status);
 create index if not exists prospects_thread_idx          on public.prospects (thread_id);
 create index if not exists prospects_status_sent_idx     on public.prospects (status, last_sent_at);
+create index if not exists prospects_added_by_idx        on public.prospects (added_by);
 
 -- Normalise emails and auto-create unknown industries on import
 create or replace function public.prospects_before_write() returns trigger
