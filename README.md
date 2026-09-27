@@ -61,18 +61,12 @@ The page itself is public; nobody sees data without signing in with an admin ema
 
 ## What's left for you (about 15 minutes)
 
-### 1. Dashboard logins — up to 10 people (2 min per person)
-For each teammate who needs their own sign-in (you're one of them):
+### 1. Dashboard login (2 min)
 1. Supabase → **Authentication → Users → Add user → Create new user**.
-   Their email, a password, tick **Auto Confirm User**.
-2. SQL editor → `insert into outreach_admins (email) values ('their-email@example.com');`
-   (Without this second step they can log in but the dashboard will refuse to load — "This login is not on the outreach admin list.")
-3. **Authentication → Sign In / Providers → Email** → turn **off** "Allow new users to sign up" (do this once, after the last person is added).
-4. Everyone opens https://biyu-outreach.vercel.app and signs in with their own email.
-
-Every admin sees the exact same combined data — all prospects, all replies, all activity, regardless of who added or is sending to them. There's no per-user daily limit or separate pause switch; the send limit, target industry, and Live/Paused toggle are shared settings for the whole team.
-
-**Telling leads apart:** each prospect is tagged with the email of whoever uploaded it (via CSV). The "Email activity" card has an **Everyone's leads / My leads / \<name\>'s leads** dropdown next to the filter chips, so anyone can see just their own leads, someone else's, or everything. Leads already in the system before this feature (uploaded before 27 Sep 2026) have no owner tag and only show under "Everyone's leads".
+   Email `gabanaofentse1@gmail.com` (or `info.biyu.ai@gmail.com`), choose a password, tick **Auto Confirm User**.
+2. **Authentication → Sign In / Providers → Email** → turn **off** "Allow new users to sign up".
+3. Open https://biyu-outreach.vercel.app and sign in.
+   To add another login email later, run in the SQL editor: `insert into outreach_admins values ('someone@example.com');`
 
 ### 2. n8n (10 min)
 1. **Workflows → Import from file** → `setup/2_n8n_outreach_workflow.json`.

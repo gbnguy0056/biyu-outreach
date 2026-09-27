@@ -183,7 +183,6 @@
         <div class="card-head">
           <h2>Email activity</h2>
           <div class="filters" id="filters"></div>
-          <select id="ownerFilter" class="in" style="max-width:170px;flex:0 0 auto"></select>
           <input id="search" class="search" type="search" placeholder="Search name, company, subject…">
         </div>
         <div class="table-wrap">
@@ -236,7 +235,7 @@
         <div class="card-head"><h2>Add prospects</h2></div>
         <div class="card-body">
           <div class="drop" id="drop">Upload a CSV
-            <small>Columns: email, name, company, role, linkedin, industry, country, notes. Missing industry uses the target industry. Duplicates are skipped. Leads are tagged with your login email.</small>
+            <small>Columns: email, name, company, role, linkedin, industry, country, notes. Missing industry uses the target industry. Duplicates are skipped.</small>
           </div>
           <input id="csv" type="file" accept=".csv,text/csv" class="hidden">
           <div id="csvResult" class="sub" style="margin-top:8px"></div>
@@ -274,8 +273,8 @@ const STATUS_ORDER = [['new', 'Not contacted'], ['contacted', 'In sequence'], ['
   ['completed', 'No response'], ['opted_out', 'Opted out'], ['bounced', 'Bounced'], ['invalid', 'Invalid']];
 
 let db = null;
-let state = { settings: null, industries: [], stats: null, log: [], me: null };
-let view = { filter: 'all', q: '', shown: 25, open: null, owner: 'all' };
+let state = { settings: null, industries: [], stats: null, log: [] };
+let view = { filter: 'all', q: '', shown: 25, open: null };
 
 /* ------------------------------ helpers ------------------------------ */
 function toast(msg) {
@@ -311,13 +310,13 @@ async function load() {
     db.from('industries').select('name,pitch').order('name'),
     db.rpc('outreach_stats'),
     db.from('email_log')
-      .select('id,direction,kind,step,subject,body,error,ai_fallback,thread_id,created_at,prospects(full_name,company,industry,email,added_by)')
+      .select('id,direction,kind,step,subject,body,error,ai_fallback,thread_id,created_at,prospects(full_name,company,industry,email)')
       .order('created_at', { ascending: false }).limit(300),
   ]);
   if (s.error && s.error.code === 'PGRST116') { toast('This login is not on the outreach admin list.'); return; }
   const err = s.error || ind.error || st.error || log.error;
   if (err) { toast('Load failed: ' + err.message); return; }
-  Object.assign(state, { settings: s.data, industries: ind.data, stats: st.data, log: log.data });
+  state = { settings: s.data, industries: ind.data, stats: st.data, log: log.data };
   render();
 }
 
@@ -411,8 +410,6 @@ function renderReplies() {
     </div>`).join('') : '<div class="empty">No replies yet. You\'ll get an email the moment one arrives.</div>';
 }
 
-function shortOwner(email) { return email ? esc(email.split('@')[0]) : ''; }
-
 function filtered() {
   const q = view.q.toLowerCase();
   return state.log.filter((e) => {
@@ -422,39 +419,23 @@ function filtered() {
     if (f === 'reply' && e.kind !== 'reply') return false;
     if (f === 'problems' && !['opt_out', 'bounce'].includes(e.kind)) return false;
     if (f === 'failed' && e.kind !== 'failed') return false;
-    const p = e.prospects || {};
-    if (view.owner === 'me' && p.added_by !== state.me) return false;
-    if (view.owner !== 'all' && view.owner !== 'me' && p.added_by !== view.owner) return false;
     if (!q) return true;
+    const p = e.prospects || {};
     return [p.full_name, p.company, p.email, p.industry, e.subject].some((x) => String(x || '').toLowerCase().includes(q));
   });
 }
 
-function renderOwnerFilter() {
-  const owners = [...new Set(state.log.map((e) => e.prospects?.added_by).filter(Boolean))].sort();
-  const opts = [['all', 'Everyone’s leads']];
-  if (state.me) opts.push(['me', 'My leads']);
-  owners.filter((o) => o !== state.me).forEach((o) => opts.push([o, shortOwner(o) + '’s leads']));
-  const sel = $('ownerFilter');
-  const prev = view.owner;
-  sel.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${l}</option>`).join('');
-  sel.value = opts.some(([v]) => v === prev) ? prev : 'all';
-  view.owner = sel.value;
-}
-
 function renderTable() {
   $('filters').innerHTML = FILTERS.map(([k, l]) => `<button class="chip ${view.filter === k ? 'on' : ''}" data-f="${k}">${l}</button>`).join('');
-  renderOwnerFilter();
   const list = filtered();
   const shown = list.slice(0, view.shown);
   $('rows').innerHTML = shown.length ? shown.map((e) => {
     const p = e.prospects || {};
     const step = e.kind === 'followup' ? ` ${e.step}` : '';
     const extra = e.ai_fallback ? '<span class="tag" title="AI copy failed a check, safe template used">template</span>' : '';
-    const owner = p.added_by ? ` · <span title="Lead added by ${esc(p.added_by)}">${shortOwner(p.added_by)}</span>` : '';
     const row = `<tr data-id="${e.id}">
       <td class="time">${fmtTime(e.created_at)}</td>
-      <td><div>${esc(p.full_name || p.email || '—')}</div><div class="co">${esc(p.company || '')}${p.industry ? ' · ' + esc(p.industry) : ''}${owner}</div></td>
+      <td><div>${esc(p.full_name || p.email || '—')}</div><div class="co">${esc(p.company || '')}${p.industry ? ' · ' + esc(p.industry) : ''}</div></td>
       <td><span class="pill k-${e.kind}"><i></i>${KIND[e.kind]}${step}</span>${extra}</td>
       <td class="subj">${esc(e.subject || '')}</td></tr>`;
     const detail = view.open === e.id ? `<tr class="detail"><td colspan="4">${esc(e.error || e.body || '(no content stored)')}${
@@ -481,7 +462,6 @@ $('filters').addEventListener('click', (ev) => {
   view.filter = b.dataset.f; view.shown = 25; view.open = null; renderTable();
 });
 $('search').addEventListener('input', (ev) => { view.q = ev.target.value; view.shown = 25; renderTable(); });
-$('ownerFilter').addEventListener('change', (ev) => { view.owner = ev.target.value; view.shown = 25; renderTable(); });
 $('more').addEventListener('click', () => { view.shown += 25; renderTable(); });
 $('rows').addEventListener('click', (ev) => {
   if (ev.target.closest('a')) return;
@@ -546,7 +526,6 @@ $('csv').addEventListener('change', async (ev) => {
     email: get(r, 'email').toLowerCase(), full_name: get(r, 'name') || null, company: get(r, 'company') || null,
     job_title: get(r, 'role') || null, linkedin: get(r, 'linkedin') || null,
     industry: get(r, 'industry') || $('industry').value, country: get(r, 'country') || 'Botswana', notes: get(r, 'notes') || null,
-    added_by: state.me || null,
   })).filter((p) => {
     const good = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(p.email) && !seen.has(p.email);
     if (!good) skipped++; else seen.add(p.email);
@@ -600,9 +579,8 @@ function demoData() {
     'Not right now, maybe early next year. Please check back in January.'];
   const log = []; let id = 1;
   const now = Date.now(), day = 86400000;
-  const owners = ['gabanaofentse1@gmail.com', 'boago@biyu.agency', 'thato@biyu.agency'];
   people.forEach(([name, company, industry], i) => {
-    const p = { full_name: name, company, industry, email: name.split(' ').slice(-1)[0].toLowerCase() + '@' + company.split(' ')[0].toLowerCase() + '.co.bw', added_by: owners[i % owners.length] };
+    const p = { full_name: name, company, industry, email: name.split(' ').slice(-1)[0].toLowerCase() + '@' + company.split(' ')[0].toLowerCase() + '.co.bw' };
     const d0 = new Date(now - (i % 10) * day); d0.setUTCHours(6 + (i % 7), (i * 17) % 60, 0, 0);
     const t0 = Math.min(d0.getTime(), now - 20 * 60000);
     const subj = subjects[i % subjects.length].replace('{c}', company);
@@ -621,7 +599,6 @@ function demoData() {
   log.push({ id: id++, kind: 'failed', subject: 'Quick question for Kasane Lodge Supplies', created_at: new Date(now - day).toISOString(), prospects: { full_name: 'Naledi Ntsima', company: 'Kasane Lodge Supplies', industry: 'Retail & Distribution' }, error: '[bad address] 400 Invalid To header' });
   log.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return {
-    me: 'gabanaofentse1@gmail.com',
     settings: { target_industry: 'Retail & Distribution', daily_limit: 30, max_followups: 2, paused: false, notify_email: 'gabanaofentse1@gmail.com',
       sender_email: 'ofentse@biyu.agency', window_start_hour: 8, window_end_hour: 16, warmup_day: 12 },
     industries: [
@@ -667,12 +644,11 @@ async function boot() {
   });
   db = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
   const { data } = await db.auth.getSession();
-  if (data.session) { state.me = data.session.user.email; return start(); }
+  if (data.session) return start();
   $('login').classList.remove('hidden');
   const go = async () => {
-    const { data: sd, error } = await db.auth.signInWithPassword({ email: $('lg-email').value.trim(), password: $('lg-pass').value });
+    const { error } = await db.auth.signInWithPassword({ email: $('lg-email').value.trim(), password: $('lg-pass').value });
     if (error) { $('lg-err').textContent = error.message; $('lg-err').classList.remove('hidden'); return; }
-    state.me = sd.user.email;
     $('login').classList.add('hidden'); start();
   };
   $('lg-btn').addEventListener('click', go);
