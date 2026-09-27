@@ -91,6 +91,16 @@ In the dashboard fill **Send from** with the Gmail mailbox from step 2, save, th
 
 ---
 
+## Daily lead sourcing (automatic)
+
+A scheduled task runs every evening at **19:45 CAT** and delivers a CSV of **50–100 new, verified leads** from **one industry per day**, spread across English-speaking countries worldwide.
+
+- **Rotation (9 days):** Real Estate → Beauty & Wellness → Professional Services → Clinics → Hospitality → Education & Training → Automotive → Logistics & Freight → Retail & Distribution → repeat.
+- **Delivered to:** Google Drive folder **BIYU Daily Leads** + attached in the chat, named `biyu_leads_YYYY-MM-DD_<industry>.csv`.
+- **Upload:** dashboard → Add prospects → Upload CSV. The `source_url` and `best_fit_offers` columns are ignored by the upload and are there for your review.
+- **No repeats:** every delivered lead is recorded in the `lead_sourcing_log` table and checked (with `prospects` and `do_not_contact`) before the next batch.
+- **Pitches:** each industry in the dashboard has a pitch drawn from the full BIYU offer list (no prices). The email AI picks the one or two services that fit each prospect.
+
 ## Files
 
 | File | What it is |
